@@ -876,23 +876,26 @@ class DefaultAssetPickerViewerBuilderDelegate<
 
   /// Uses the same style as the preview button.
   /// 使用与预览按钮相同的风格。
-  /// Only shown when exactly one image asset is selected.
-  /// 仅在选中恰好1张图片时显示。
+  /// Only shown when the current previewing asset is an image.
+  /// 仅在当前预览的资源是图片时显示。
   Widget editButton(BuildContext context) {
     if (!showEditButton) {
       return const SizedBox.shrink();
     }
-    return Consumer<P?>(
-      builder: (context, P? provider, __) {
-        if (provider == null) {
+    return StreamBuilder<int>(
+      initialData: currentIndex,
+      stream: pageStreamController.stream,
+      builder: (_, AsyncSnapshot<int> snapshot) {
+        final int index = snapshot.data!;
+        final viewingIndex = shouldReversePreview
+            ? previewAssets.length - index - 1
+            : index;
+        final AssetEntity asset = previewAssets[viewingIndex];
+        
+        if (asset.type != AssetType.image) {
           return const SizedBox.shrink();
         }
-        final List<AssetEntity> selectedAssets = provider.selectedAssets;
-        final bool shouldShowEdit = selectedAssets.length == 1 &&
-            selectedAssets.first.type == AssetType.image;
-        if (!shouldShowEdit) {
-          return const SizedBox.shrink(); // ⭐ 不满足条件时完全隐藏
-        }
+        
         return Semantics(
           button: true,
           label: semanticsTextDelegate.edit,
@@ -901,7 +904,7 @@ class DefaultAssetPickerViewerBuilderDelegate<
             onTap: () {
               Navigator.maybeOf(context)?.maybePop(
                 AssetPickerResult(
-                  assets: selectedAssets,
+                  assets: <AssetEntity>[asset],
                   shouldEdit: true,
                 ),
               );

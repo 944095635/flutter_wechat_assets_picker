@@ -20,7 +20,6 @@ import '../constants/typedefs.dart';
 import '../delegates/asset_grid_drag_selection_coordinator.dart';
 import '../delegates/asset_picker_text_delegate.dart';
 import '../internals/singleton.dart';
-import '../models/asset_picker_result.dart';
 import '../models/path_wrapper.dart';
 import '../models/special_item.dart';
 import '../provider/asset_picker_provider.dart';
