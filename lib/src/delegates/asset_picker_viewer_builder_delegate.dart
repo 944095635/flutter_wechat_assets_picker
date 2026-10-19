@@ -874,25 +874,31 @@ class DefaultAssetPickerViewerBuilderDelegate<
     );
   }
 
-  /// Edit button which is only shown when exactly one asset is selected.
-  /// 编辑按钮，仅在选中恰好1张图片时显示。
+  /// Uses the same style as the preview button.
+  /// 使用与预览按钮相同的风格。
+  /// Only shown when exactly one image asset is selected.
+  /// 仅在选中恰好1张图片时显示。
   Widget editButton(BuildContext context) {
-    if (!showEditButton || selectedAssets == null) {
+    if (!showEditButton) {
       return const SizedBox.shrink();
     }
-    return Selector<P, List<AssetEntity>>(
-      selector: (_, p) => p.selectedAssets,
-      builder: (context, selectedAssets, _) {
-        final bool shouldShowEdit = selectedAssets.length == 1;
-        if (!shouldShowEdit) {
+    return Consumer<P?>(
+      builder: (context, P? provider, __) {
+        if (provider == null) {
           return const SizedBox.shrink();
+        }
+        final List<AssetEntity> selectedAssets = provider.selectedAssets;
+        final bool shouldShowEdit = selectedAssets.length == 1 &&
+            selectedAssets.first.type == AssetType.image;
+        if (!shouldShowEdit) {
+          return const SizedBox.shrink(); // ⭐ 不满足条件时完全隐藏
         }
         return Semantics(
           button: true,
           label: semanticsTextDelegate.edit,
           onTapHint: semanticsTextDelegate.edit,
-          child: TextButton(
-            onPressed: () {
+          child: GestureDetector(
+            onTap: () {
               Navigator.maybeOf(context)?.maybePop(
                 AssetPickerResult(
                   assets: selectedAssets,
@@ -900,10 +906,14 @@ class DefaultAssetPickerViewerBuilderDelegate<
                 ),
               );
             },
-            child: ScaleText(
-              textDelegate.edit,
-              style: const TextStyle(fontSize: 17, height: 1.2),
-              semanticsLabel: semanticsTextDelegate.edit,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              child: ScaleText(
+                textDelegate.edit,
+                style: const TextStyle(fontSize: 17),
+                maxScaleFactor: 1.2,
+                semanticsLabel: semanticsTextDelegate.edit,
+              ),
             ),
           ),
         );
