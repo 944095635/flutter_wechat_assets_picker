@@ -4,15 +4,14 @@
 
 import 'dart:async' show Completer;
 import 'dart:io' as io show Platform;
-
 import 'package:flutter/material.dart' hide Path;
 import 'package:flutter/services.dart' show MethodCall;
 import 'package:photo_manager/photo_manager.dart';
 import 'package:wechat_picker_library/wechat_picker_library.dart';
-
 import '../constants/config.dart';
 import '../delegates/asset_picker_builder_delegate.dart';
 import '../delegates/asset_picker_delegate.dart';
+import '../models/asset_picker_result.dart';
 import '../provider/asset_picker_provider.dart';
 import 'asset_picker_page_route.dart';
 
@@ -59,6 +58,28 @@ class AssetPicker<Asset, Path,
     AssetPickerPageRouteBuilder<List<AssetEntity>>? pageRouteBuilder,
   }) {
     return _pickerDelegate.pickAssets(
+      context,
+      key: key,
+      pickerConfig: pickerConfig,
+      permissionRequestOption: permissionRequestOption,
+      useRootNavigator: useRootNavigator,
+      pageRouteSettings: pageRouteSettings,
+      pageRouteBuilder: pageRouteBuilder,
+    );
+  }
+
+  /// Pick assets with edit support.
+  /// 选择资源并支持编辑功能。
+  static Future<AssetPickerResult?> pickAssetsForResult(
+    BuildContext context, {
+    Key? key,
+    PermissionRequestOption? permissionRequestOption,
+    AssetPickerConfig pickerConfig = const AssetPickerConfig(),
+    bool useRootNavigator = true,
+    RouteSettings? pageRouteSettings,
+    AssetPickerPageRouteBuilder<AssetPickerResult>? pageRouteBuilder,
+  }) {
+    return _pickerDelegate.pickAssetsForResult(
       context,
       key: key,
       pickerConfig: pickerConfig,

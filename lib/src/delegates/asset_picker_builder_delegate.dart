@@ -6,7 +6,6 @@ import 'dart:async' show Completer;
 import 'dart:math' as math;
 import 'dart:typed_data' show Uint8List;
 import 'dart:ui' as ui;
-
 import 'package:flutter/gestures.dart' show TapGestureRecognizer;
 import 'package:flutter/material.dart' hide Path;
 import 'package:flutter/semantics.dart' show OrdinalSortKey;
@@ -15,13 +14,13 @@ import 'package:photo_manager/photo_manager.dart';
 import 'package:photo_manager_image_provider/photo_manager_image_provider.dart';
 import 'package:provider/provider.dart' show Consumer, ReadContext, Selector;
 import 'package:wechat_picker_library/wechat_picker_library.dart';
-
 import '../constants/constants.dart';
 import '../constants/enums.dart';
 import '../constants/typedefs.dart';
 import '../delegates/asset_grid_drag_selection_coordinator.dart';
 import '../delegates/asset_picker_text_delegate.dart';
 import '../internals/singleton.dart';
+import '../models/asset_picker_result.dart';
 import '../models/path_wrapper.dart';
 import '../models/special_item.dart';
 import '../provider/asset_picker_provider.dart';
@@ -844,6 +843,7 @@ class DefaultAssetPickerBuilderDelegate<T extends DefaultAssetPickerProvider>
     this.shouldAutoplayPreview = false,
     this.dragToSelect,
     this.enableLivePhoto = true,
+    this.showEditButton = true,
   }) {
     // Add the listener if [keepScrollOffset] is true.
     if (keepScrollOffset) {
@@ -912,6 +912,10 @@ class DefaultAssetPickerBuilderDelegate<T extends DefaultAssetPickerProvider>
 
   /// {@macro wechat_assets_picker.constants.AssetPickerConfig.enableLivePhoto}
   final bool enableLivePhoto;
+
+  /// Whether to show the edit button.
+  /// 是否显示编辑按钮
+  final bool showEditButton;
 
   /// [Duration] when triggering path switching.
   /// 切换路径时的动画时长
@@ -1895,6 +1899,54 @@ class DefaultAssetPickerBuilderDelegate<T extends DefaultAssetPickerProvider>
     );
   }
 
+  /// Edit button which is only enabled when exactly one asset is selected.
+  /// 编辑按钮，仅在选中恰好1张图片时可点击。
+  Widget editButton(BuildContext context) {
+    if (!showEditButton) {
+      return const SizedBox.shrink();
+    }
+    return Consumer<T>(
+      builder: (_, T p, __) {
+        final int selectedCount = p.selectedAssets.length;
+        final bool shouldAllowEdit = selectedCount == 1;
+        return MaterialButton(
+          minWidth: shouldAllowEdit ? 48 : 20,
+          height: appBarItemHeight,
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          color: shouldAllowEdit
+              ? theme.colorScheme.secondary
+              : theme.splashColor,
+          disabledColor: theme.splashColor,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(3),
+          ),
+          onPressed: shouldAllowEdit
+              ? () {
+                  Navigator.maybeOf(context)?.maybePop(
+                    AssetPickerResult(
+                      assets: p.selectedAssets,
+                      shouldEdit: true,
+                    ),
+                  );
+                }
+              : null,
+          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          child: ScaleText(
+            textDelegate.edit,
+            style: TextStyle(
+              color: shouldAllowEdit
+                  ? theme.textTheme.bodyLarge?.color
+                  : theme.textTheme.bodySmall?.color,
+              fontSize: 17,
+              fontWeight: FontWeight.normal,
+            ),
+            semanticsLabel: semanticsTextDelegate.edit,
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget imageAndVideoItemBuilder(
     BuildContext context,
@@ -2583,6 +2635,8 @@ class DefaultAssetPickerBuilderDelegate<T extends DefaultAssetPickerProvider>
               if (isPreviewEnabled || !isSingleAssetMode) const Spacer(),
               if (isPreviewEnabled || !isSingleAssetMode)
                 confirmButton(context),
+              if (showEditButton) const SizedBox(width: 8),
+              if (showEditButton) editButton(context),
             ],
           ),
         ),

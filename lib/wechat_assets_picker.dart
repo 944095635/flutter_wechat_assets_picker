@@ -18,6 +18,7 @@ export 'src/delegates/asset_picker_text_delegate.dart';
 export 'src/delegates/asset_picker_viewer_builder_delegate.dart';
 export 'src/delegates/sort_path_delegate.dart';
 
+export 'src/models/asset_picker_result.dart';
 export 'src/models/path_wrapper.dart';
 export 'src/models/special_item.dart';
 

@@ -7,9 +7,9 @@ import 'package:flutter/services.dart' show MethodCall;
 import 'package:photo_manager/photo_manager.dart';
 import 'package:wechat_picker_library/wechat_picker_library.dart'
     show buildTheme;
-
 import '../constants/config.dart';
 import '../constants/constants.dart' show packageName;
+import '../models/asset_picker_result.dart';
 import '../provider/asset_picker_provider.dart';
 import '../widget/asset_picker.dart';
 import '../widget/asset_picker_page_route.dart';
@@ -124,6 +124,7 @@ class AssetPickerDelegate {
         shouldAutoplayPreview: pickerConfig.shouldAutoplayPreview,
         dragToSelect: pickerConfig.dragToSelect,
         enableLivePhoto: pickerConfig.enableLivePhoto,
+        showEditButton: false,
       ),
     );
     final List<AssetEntity>? result = await Navigator.maybeOf(
@@ -137,6 +138,114 @@ class AssetPickerDelegate {
           ),
     );
     return result;
+  }
+
+  /// Pick assets with edit support, returning an [AssetPickerResult].
+  /// 选择资源并支持编辑功能，返回 [AssetPickerResult]。
+  ///
+  /// This method is similar to [pickAssets], but returns an
+  /// [AssetPickerResult] which includes both the selected assets and
+  /// a flag indicating whether the user wants to edit them.
+  /// 此方法与 [pickAssets] 类似，但返回 [AssetPickerResult]，
+  /// 包含选中的资源和是否需要编辑的标识。
+  ///
+  /// When [AssetPickerConfig.showEditButton] is true (default),
+  /// an edit button will be shown. The edit button is only enabled
+  /// when exactly one asset is selected.
+  /// 当 [AssetPickerConfig.showEditButton] 为 true（默认）时，
+  /// 会显示编辑按钮。编辑按钮仅在选中恰好1张图片时可用。
+  ///
+  /// Example:
+  /// 示例：
+  /// ```dart
+  /// final AssetPickerResult? result = await AssetPicker.pickAssetsForResult(
+  ///   context,
+  ///   pickerConfig: const AssetPickerConfig(maxAssets: 9),
+  /// );
+  ///
+  /// if (result != null) {
+  ///   if (result.shouldEdit) {
+  ///     // User clicked edit button - navigate to editor
+  ///     // 用户点击了编辑按钮 - 跳转到编辑页面
+  ///   } else {
+  ///     // User clicked confirm button - use assets directly
+  ///     // 用户点击了确认按钮 - 直接使用资源
+  ///   }
+  /// }
+  /// ```
+  Future<AssetPickerResult?> pickAssetsForResult(
+    BuildContext context, {
+    Key? key,
+    AssetPickerConfig pickerConfig = const AssetPickerConfig(),
+    PermissionRequestOption? permissionRequestOption,
+    bool useRootNavigator = true,
+    RouteSettings? pageRouteSettings,
+    AssetPickerPageRouteBuilder<AssetPickerResult>? pageRouteBuilder,
+  }) async {
+    permissionRequestOption ??= PermissionRequestOption(
+      androidPermission: AndroidPermission(
+        type: pickerConfig.requestType,
+        mediaLocation: false,
+      ),
+    );
+    final PermissionState ps = await permissionCheck(
+      requestOption: permissionRequestOption,
+    );
+    final DefaultAssetPickerProvider provider = DefaultAssetPickerProvider(
+      maxAssets: pickerConfig.maxAssets,
+      pageSize: pickerConfig.pageSize,
+      pathThumbnailSize: pickerConfig.pathThumbnailSize,
+      selectedAssets: pickerConfig.selectedAssets,
+      requestType: pickerConfig.requestType,
+      sortPathDelegate: pickerConfig.sortPathDelegate,
+      filterOptions: pickerConfig.filterOptions,
+    );
+    final picker = AssetPicker<AssetEntity, AssetPathEntity,
+        DefaultAssetPickerBuilderDelegate>(
+      key: key,
+      permissionRequestOption: permissionRequestOption,
+      builder: DefaultAssetPickerBuilderDelegate(
+        provider: provider,
+        initialPermission: ps,
+        gridCount: pickerConfig.gridCount,
+        pickerTheme: pickerConfig.pickerTheme,
+        gridThumbnailSize: pickerConfig.gridThumbnailSize,
+        previewThumbnailSize: pickerConfig.previewThumbnailSize,
+        specialPickerType: pickerConfig.specialPickerType,
+        specialItems: pickerConfig.specialItems,
+        loadingIndicatorBuilder: pickerConfig.loadingIndicatorBuilder,
+        selectPredicate: pickerConfig.selectPredicate,
+        shouldRevertGrid: pickerConfig.shouldRevertGrid,
+        limitedPermissionOverlayPredicate:
+            pickerConfig.limitedPermissionOverlayPredicate,
+        pathNameBuilder: pickerConfig.pathNameBuilder,
+        assetsChangeCallback: pickerConfig.assetsChangeCallback,
+        assetsChangeRefreshPredicate: pickerConfig.assetsChangeRefreshPredicate,
+        textDelegate: pickerConfig.textDelegate,
+        themeColor: pickerConfig.themeColor,
+        locale: Localizations.maybeLocaleOf(context),
+        shouldAutoplayPreview: pickerConfig.shouldAutoplayPreview,
+        dragToSelect: pickerConfig.dragToSelect,
+        enableLivePhoto: pickerConfig.enableLivePhoto,
+        showEditButton: true,
+      ),
+    );
+    final dynamic result = await Navigator.maybeOf(
+      context,
+      rootNavigator: useRootNavigator,
+    )?.push<dynamic>(
+      pageRouteBuilder?.call(picker) ??
+          AssetPickerPageRoute<dynamic>(
+            builder: (_) => picker,
+            settings: pageRouteSettings,
+          ),
+    );
+    if (result is AssetPickerResult) {
+      return result;
+    } else if (result is List<AssetEntity>) {
+      return AssetPickerResult(assets: result, shouldEdit: false);
+    }
+    return null;
   }
 
   /// {@template wechat_assets_picker.delegates.AssetPickerDelegate.pickAssetsWithDelegate}
