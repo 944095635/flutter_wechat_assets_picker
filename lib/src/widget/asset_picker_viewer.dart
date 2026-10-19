@@ -3,10 +3,8 @@
 // in the LICENSE file.
 
 import 'dart:async';
-
 import 'package:flutter/material.dart' hide Path;
 import 'package:photo_manager/photo_manager.dart';
-
 import '../constants/constants.dart';
 import '../constants/enums.dart';
 import '../constants/typedefs.dart';
@@ -50,6 +48,7 @@ class AssetPickerViewer<
     AssetSelectPredicate<AssetEntity>? selectPredicate,
     bool shouldAutoplayPreview = false,
     bool enableLivePhoto = true,
+    bool showEditButton = false,
     bool useRootNavigator = false,
     RouteSettings? pageRouteSettings,
     AssetPickerViewerPageRouteBuilder<List<AssetEntity>>? pageRouteBuilder,
@@ -84,6 +83,7 @@ class AssetPickerViewer<
         selectPredicate: selectPredicate,
         shouldAutoplayPreview: shouldAutoplayPreview,
         enableLivePhoto: enableLivePhoto,
+        showEditButton: showEditButton,
       ),
     );
     final result = await Navigator.maybeOf(

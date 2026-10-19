@@ -4,21 +4,20 @@
 
 import 'dart:async' show StreamController;
 import 'dart:math' as math show max;
-
-import 'package:extended_image/extended_image.dart';
 import 'package:flutter/material.dart' hide Path;
 import 'package:flutter/semantics.dart' show OrdinalSortKey;
 import 'package:flutter/services.dart' show SystemUiOverlayStyle;
+import 'package:extended_image/extended_image.dart';
 import 'package:photo_manager/photo_manager.dart';
 import 'package:photo_manager_image_provider/photo_manager_image_provider.dart';
 import 'package:provider/provider.dart' show Consumer, Selector;
 import 'package:wechat_picker_library/wechat_picker_library.dart';
-
 import '../constants/custom_scroll_physics.dart';
 import '../constants/enums.dart';
 import '../constants/typedefs.dart';
 import '../delegates/asset_picker_text_delegate.dart';
 import '../internals/singleton.dart';
+import '../models/asset_picker_result.dart';
 import '../provider/asset_picker_provider.dart';
 import '../provider/asset_picker_viewer_provider.dart';
 import '../widget/asset_picker_app_bar.dart';
@@ -379,6 +378,7 @@ class DefaultAssetPickerViewerBuilderDelegate<
     super.selectPredicate,
     this.shouldAutoplayPreview = false,
     this.enableLivePhoto = true,
+    this.showEditButton = false,
   });
 
   /// Provider for [AssetPicker].
@@ -402,6 +402,10 @@ class DefaultAssetPickerViewerBuilderDelegate<
   /// Whether the preview should auto play.
   /// 预览是否自动播放
   final bool shouldAutoplayPreview;
+
+  /// Whether to show the edit button in the viewer.
+  /// 是否在预览页面显示编辑按钮
+  final bool showEditButton;
 
   /// Whether the [SpecialPickerType.wechatMoment] is enabled.
   /// 当前是否为微信朋友圈选择模式
@@ -610,8 +614,9 @@ class DefaultAssetPickerViewerBuilderDelegate<
               color: backgroundColor,
             ),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.end,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: <Widget>[
+                if (showEditButton) editButton(context),
                 if (provider != null || isWeChatMoment) confirmButton(context),
               ],
             ),
@@ -863,6 +868,43 @@ class DefaultAssetPickerViewerBuilderDelegate<
               }
               return semanticsTextDelegate.confirm;
             }(),
+          ),
+        );
+      },
+    );
+  }
+
+  /// Edit button which is only shown when exactly one asset is selected.
+  /// 编辑按钮，仅在选中恰好1张图片时显示。
+  Widget editButton(BuildContext context) {
+    if (!showEditButton || selectedAssets == null) {
+      return const SizedBox.shrink();
+    }
+    return Selector<P, List<AssetEntity>>(
+      selector: (_, p) => p.selectedAssets,
+      builder: (context, selectedAssets, _) {
+        final bool shouldShowEdit = selectedAssets.length == 1;
+        if (!shouldShowEdit) {
+          return const SizedBox.shrink();
+        }
+        return Semantics(
+          button: true,
+          label: semanticsTextDelegate.edit,
+          onTapHint: semanticsTextDelegate.edit,
+          child: TextButton(
+            onPressed: () {
+              Navigator.maybeOf(context)?.maybePop(
+                AssetPickerResult(
+                  assets: selectedAssets,
+                  shouldEdit: true,
+                ),
+              );
+            },
+            child: ScaleText(
+              textDelegate.edit,
+              style: const TextStyle(fontSize: 17, height: 1.2),
+              semanticsLabel: semanticsTextDelegate.edit,
+            ),
           ),
         );
       },

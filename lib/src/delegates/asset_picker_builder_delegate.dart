@@ -1207,6 +1207,7 @@ class DefaultAssetPickerBuilderDelegate<T extends DefaultAssetPickerProvider>
       shouldReversePreview: revert,
       shouldAutoplayPreview: shouldAutoplayPreview,
       enableLivePhoto: enableLivePhoto,
+      showEditButton: showEditButton,
       useRootNavigator: viewerUseRootNavigator,
       pageRouteSettings: viewerPageRouteSettings,
       pageRouteBuilder: viewerPageRouteBuilder,
@@ -1893,53 +1894,6 @@ class DefaultAssetPickerBuilderDelegate<T extends DefaultAssetPickerProvider>
                 ? '${semanticsTextDelegate.confirm}'
                     ' (${p.selectedAssets.length}/${p.maxAssets})'
                 : semanticsTextDelegate.confirm,
-          ),
-        );
-      },
-    );
-  }
-
-  /// Edit button which is only enabled when exactly one asset is selected.
-  /// 编辑按钮，仅在选中恰好1张图片时可点击。
-  /// Uses the same style as the preview button.
-  /// 使用与预览按钮相同的风格。
-  Widget editButton(BuildContext context) {
-    if (!showEditButton) {
-      return const SizedBox.shrink();
-    }
-    return Consumer<T>(
-      builder: (_, T p, __) {
-        final int selectedCount = p.selectedAssets.length;
-        final bool shouldAllowEdit = selectedCount == 1;
-        return Semantics(
-          enabled: shouldAllowEdit,
-          focusable: true,
-          onTapHint: semanticsTextDelegate.edit,
-          child: GestureDetector(
-            onTap: shouldAllowEdit
-                ? () {
-                    Navigator.maybeOf(context)?.maybePop(
-                      AssetPickerResult(
-                        assets: p.selectedAssets,
-                        shouldEdit: true,
-                      ),
-                    );
-                  }
-                : null,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              child: ScaleText(
-                textDelegate.edit,
-                style: TextStyle(
-                  color: shouldAllowEdit
-                      ? null
-                      : context.textTheme.bodySmall?.color,
-                  fontSize: 17,
-                ),
-                maxScaleFactor: 1.2,
-                semanticsLabel: semanticsTextDelegate.edit,
-              ),
-            ),
           ),
         );
       },
