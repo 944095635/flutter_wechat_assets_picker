@@ -1901,6 +1901,8 @@ class DefaultAssetPickerBuilderDelegate<T extends DefaultAssetPickerProvider>
 
   /// Edit button which is only enabled when exactly one asset is selected.
   /// 编辑按钮，仅在选中恰好1张图片时可点击。
+  /// Uses the same style as the preview button.
+  /// 使用与预览按钮相同的风格。
   Widget editButton(BuildContext context) {
     if (!showEditButton) {
       return const SizedBox.shrink();
@@ -1909,38 +1911,35 @@ class DefaultAssetPickerBuilderDelegate<T extends DefaultAssetPickerProvider>
       builder: (_, T p, __) {
         final int selectedCount = p.selectedAssets.length;
         final bool shouldAllowEdit = selectedCount == 1;
-        return MaterialButton(
-          minWidth: shouldAllowEdit ? 48 : 20,
-          height: appBarItemHeight,
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          color: shouldAllowEdit
-              ? theme.colorScheme.secondary
-              : theme.splashColor,
-          disabledColor: theme.splashColor,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(3),
-          ),
-          onPressed: shouldAllowEdit
-              ? () {
-                  Navigator.maybeOf(context)?.maybePop(
-                    AssetPickerResult(
-                      assets: p.selectedAssets,
-                      shouldEdit: true,
-                    ),
-                  );
-                }
-              : null,
-          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          child: ScaleText(
-            textDelegate.edit,
-            style: TextStyle(
-              color: shouldAllowEdit
-                  ? theme.textTheme.bodyLarge?.color
-                  : theme.textTheme.bodySmall?.color,
-              fontSize: 17,
-              fontWeight: FontWeight.normal,
+        return Semantics(
+          enabled: shouldAllowEdit,
+          focusable: true,
+          onTapHint: semanticsTextDelegate.edit,
+          child: GestureDetector(
+            onTap: shouldAllowEdit
+                ? () {
+                    Navigator.maybeOf(context)?.maybePop(
+                      AssetPickerResult(
+                        assets: p.selectedAssets,
+                        shouldEdit: true,
+                      ),
+                    );
+                  }
+                : null,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              child: ScaleText(
+                textDelegate.edit,
+                style: TextStyle(
+                  color: shouldAllowEdit
+                      ? null
+                      : context.textTheme.bodySmall?.color,
+                  fontSize: 17,
+                ),
+                maxScaleFactor: 1.2,
+                semanticsLabel: semanticsTextDelegate.edit,
+              ),
             ),
-            semanticsLabel: semanticsTextDelegate.edit,
           ),
         );
       },
@@ -2635,8 +2634,6 @@ class DefaultAssetPickerBuilderDelegate<T extends DefaultAssetPickerProvider>
               if (isPreviewEnabled || !isSingleAssetMode) const Spacer(),
               if (isPreviewEnabled || !isSingleAssetMode)
                 confirmButton(context),
-              if (showEditButton) const SizedBox(width: 8),
-              if (showEditButton) editButton(context),
             ],
           ),
         ),
