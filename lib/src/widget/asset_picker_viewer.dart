@@ -33,7 +33,7 @@ class AssetPickerViewer<
 
   /// Static method to push with the navigator.
   /// 跳转至选择预览的静态方法
-  static Future<List<AssetEntity>?>
+  static Future<dynamic>
       pushToViewer<P extends DefaultAssetPickerProvider>(
     BuildContext context, {
     int currentIndex = 0,
@@ -89,7 +89,7 @@ class AssetPickerViewer<
     final result = await Navigator.maybeOf(
       context,
       rootNavigator: useRootNavigator,
-    )?.push<List<AssetEntity>>(
+    )?.push<dynamic>(
       pageRouteBuilder?.call(viewer) ??
           AssetPickerViewerPageRoute(builder: (context) => viewer),
     );
